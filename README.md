@@ -1,6 +1,10 @@
 # PV failure event explorer
 
-This is a shareable, standalone snapshot generated 2026-07-29 20:56 UTC. Share this entire folder.
+This is a shareable, standalone snapshot generated 2026-07-29 21:24 UTC. Share this entire folder.
+
+## Best way to share it
+
+Publish this folder with GitHub Pages and share the resulting web address. See `PUBLISH_ON_GITHUB.md`; recipients then need only a browser, not Python.
 
 ## Open it
 
