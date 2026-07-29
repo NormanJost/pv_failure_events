@@ -1,0 +1,19 @@
+{
+  "event_rows": 97,
+  "event_columns": 74,
+  "unique_event_ids": 97,
+  "strict_duplicate_rows": 0,
+  "mapped_events": 55,
+  "workbook_unique_urls": 96,
+  "url_capture_rows": 96,
+  "successful_pdf_archives": 72,
+  "failed_or_unavailable_urls": 24,
+  "missing_capture_urls": [],
+  "unexpected_capture_urls": [],
+  "unreadable_or_missing_pdfs": [],
+  "duplicate_event_ids": 0,
+  "bad_coordinate_rows": [],
+  "web_source_urls_missing_from_log": [],
+  "import_rows": 83,
+  "import_ids_missing_from_csv": []
+}

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PV failure event explorer</title>
+    <link rel="stylesheet" href="assets/leaflet/leaflet.css" crossorigin="">
+    <style>
+      :root { --ink:#12232e; --muted:#5e6d73; --line:#dbe4e8; --panel:#f7fafb; --accent:#008a7a; --accent-dark:#00675d; --warn:#d97706; --danger:#b91c1c; }
+      * { box-sizing:border-box; } body { margin:0; color:var(--ink); background:#eef4f5; font:14px/1.4 Inter, ui-sans-serif, system-ui, sans-serif; }
+      header { background:linear-gradient(120deg,#083344,#075e54); color:white; padding:22px clamp(18px,4vw,52px); display:flex; gap:24px; justify-content:space-between; align-items:end; }
+      h1 { margin:0; font-size:clamp(22px,3vw,34px); letter-spacing:-.04em; } header p { margin:5px 0 0; color:#c7f0e8; } .metrics { display:flex; gap:10px; flex-wrap:wrap; } .metric { background:#ffffff18; border:1px solid #ffffff30; padding:8px 12px; border-radius:10px; min-width:90px; } .metric b { display:block; font-size:19px; }
+      main { display:grid; grid-template-columns:minmax(320px, 39%) 1fr; min-height:calc(100vh - 109px); } .sidebar { background:white; border-right:1px solid var(--line); overflow:auto; } .filters { padding:16px; border-bottom:1px solid var(--line); display:grid; gap:9px; } input, select { width:100%; padding:9px 10px; border:1px solid #b9c8ce; border-radius:7px; background:white; color:var(--ink); font:inherit; } label { color:var(--muted); font-size:12px; font-weight:650; } .filter-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; } .checkbox { display:flex; gap:7px; align-items:center; color:var(--muted); font-size:12px; } .checkbox input { width:auto; }
+      #result-summary { padding:11px 16px; color:var(--muted); border-bottom:1px solid var(--line); font-size:12px; } #events { list-style:none; padding:0; margin:0; } .event { padding:14px 16px; border-bottom:1px solid var(--line); cursor:pointer; transition:background .15s; } .event:hover, .event.active { background:#e8f7f4; } .event-top { display:flex; gap:7px; justify-content:space-between; align-items:flex-start; } .event h2 { font-size:14px; line-height:1.25; margin:0; } .tag { display:inline-block; white-space:nowrap; border-radius:999px; padding:2px 7px; font-size:11px; font-weight:700; text-transform:capitalize; background:#e2f0ee; color:var(--accent-dark); } .tag.unmapped { background:#fff2dc; color:#9a5100; } .place { margin:5px 0 0; color:var(--muted); font-size:12px; } .impact { margin:7px 0 0; color:#36484f; font-size:12px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+      .map-area { position:relative; min-height:560px; } #map { position:absolute; inset:0; } .map-note { position:absolute; z-index:500; left:12px; bottom:12px; max-width:330px; background:#ffffffeb; border:1px solid var(--line); box-shadow:0 4px 18px #1232; border-radius:8px; padding:9px 11px; color:var(--muted); font-size:12px; }
+      .leaflet-popup-content { min-width:240px; } .popup-title { margin:0 0 5px; font-size:14px; } .popup-meta { margin:0; color:var(--muted); font-size:12px; } .detail { max-width:520px; } .detail h3 { margin:0 0 4px; font-size:16px; } .detail p { margin:7px 0; } .detail dl { display:grid; grid-template-columns:120px 1fr; gap:4px 8px; margin:10px 0; font-size:12px; } .detail dt { color:var(--muted); } .sources a { display:block; overflow-wrap:anywhere; color:#006e63; margin:4px 0; }
+      @media (max-width:840px) { header { align-items:start; flex-direction:column; } main { grid-template-columns:1fr; } .sidebar { max-height:50vh; border-right:0; border-bottom:1px solid var(--line); } .map-area { min-height:55vh; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div><h1>PV failure event explorer</h1><p>Source-auditable PV failures, weather hazards, locations, and capture status.</p></div>
+      <div class="metrics"><div class="metric"><b id="event-count">–</b>events</div><div class="metric"><b id="mapped-count">–</b>mapped</div><div class="metric"><b id="shown-count">–</b>shown</div></div>
+    </header>
+    <main>
+      <section class="sidebar" aria-label="Event filters and results">
+        <div class="filters">
+          <label>Search events<input id="search" type="search" placeholder="Facility, event, city, impact…"></label>
+          <div class="filter-grid"><label>Cause<select id="cause"><option value="">All causes</option></select></label><label>Country<select id="country"><option value="">All countries</option></select></label></div>
+          <label>Review status<select id="review"><option value="">All review statuses</option></select></label>
+          <label class="checkbox"><input id="mapped-only" type="checkbox"> Show only events with coordinates</label>
+        </div>
+        <div id="result-summary"></div><ol id="events"></ol>
+      </section>
+      <section class="map-area"><div id="map" aria-label="Map of PV failure events"></div><div class="map-note">Markers reflect source-reported or explicitly labelled geocoded coordinates. Unmapped records remain searchable in the event list.</div></section>
+    </main>
+    <script src="assets/leaflet/leaflet.js" crossorigin=""></script>
+    <script src="events.js"></script>
+    <script>
+      const $ = (selector) => document.querySelector(selector);
+      const escapeHTML = (value) => String(value ?? "").replace(/[&<>'"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+      const isKnown = (value) => value && value !== 'not reported' && value !== 'not applicable';
+      const map = window.L ? L.map('map', { worldCopyJump:true }).setView([20, 0], 2) : null;
+      if (map) { L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:18, attribution:'© OpenStreetMap contributors' }).addTo(map); }
+      const markerLayer = map ? L.layerGroup().addTo(map) : null;
+      let activeId = null;
+      const colorByCause = { hail:'#0f766e', hurricane:'#2563eb', tornado:'#7c3aed', wind:'#0e7490', flood:'#0369a1', wildfire:'#dc2626', lightning:'#ca8a04', snow_ice:'#475569', equipment_failure:'#b45309', other:'#6b7280' };
+      function populate(selector, items) { for (const item of items) { const opt=document.createElement('option'); opt.value=item; opt.textContent=item.replaceAll('_',' '); $(selector).append(opt); } }
+      populate('#cause', PV_FAILURE_SUMMARY.causes); populate('#country', PV_FAILURE_SUMMARY.countries); populate('#review', [...new Set(PV_FAILURE_EVENTS.map(e => e.reviewStatus))].sort());
+      $('#event-count').textContent = PV_FAILURE_SUMMARY.eventCount; $('#mapped-count').textContent = PV_FAILURE_SUMMARY.mappedCount;
+      function filteredEvents() {
+        const query = $('#search').value.trim().toLowerCase(), cause=$('#cause').value, country=$('#country').value, review=$('#review').value, mappedOnly=$('#mapped-only').checked;
+        return PV_FAILURE_EVENTS.filter((event) => {
+          const text = [event.name,event.date,event.city,event.county,event.state,event.country,event.impact,event.namedEvent,event.hazardDetail].join(' ').toLowerCase();
+          return (!query || text.includes(query)) && (!cause || event.cause===cause) && (!country || event.country===country) && (!review || event.reviewStatus===review) && (!mappedOnly || event.latitude !== null);
+        });
+      }
+      function place(event) { return [event.city,event.county,event.state,event.country].filter(isKnown).join(', ') || 'Location not reported'; }
+      function detail(event) {
+        const sourceLinks = event.sourceUrls.length ? event.sourceUrls.map(url => `<a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(url)}</a>`).join('') : '<span>No source URL reported.</span>';
+        const field = (label, value) => isKnown(value) ? `<dt>${escapeHTML(label)}</dt><dd>${escapeHTML(value)}</dd>` : '';
+        return `<article class="detail"><h3>${escapeHTML(event.name)}</h3><p class="popup-meta">${escapeHTML(event.id)} · ${escapeHTML(event.date)} · ${escapeHTML(place(event))}</p><dl>${field('Cause',event.cause)}${field('Named event',event.namedEvent)}${field('Severity',event.severity)}${field('Reported loss',event.reportedLoss)}${field('Capacity',event.capacity)}${field('Coordinate precision',event.locationPrecision)}${field('Review',event.reviewStatus)}${field('Capture',event.captureStatus)}</dl><p><b>Impact:</b> ${escapeHTML(event.impact)}</p><p><b>Failure mode:</b> ${escapeHTML(event.failureMode)}</p><div class="sources"><b>Sources</b>${sourceLinks}</div></article>`;
+      }
+      function selectEvent(event) { activeId=event.id; if (event.latitude !== null && map) { map.setView([event.latitude,event.longitude], Math.max(map.getZoom(),7)); } render(); }
+      function render() {
+        const events=filteredEvents(); $('#shown-count').textContent=events.length; $('#result-summary').textContent=`${events.length} event${events.length===1?'':'s'} match the current filters.`;
+        const list=$('#events'); list.replaceChildren(); if (markerLayer) markerLayer.clearLayers();
+        events.forEach((event) => {
+          const item=document.createElement('li'); item.className=`event ${event.id===activeId?'active':''}`; item.innerHTML=`<div class="event-top"><h2>${escapeHTML(event.name)}</h2><span class="tag ${event.latitude===null?'unmapped':''}">${escapeHTML(event.cause.replaceAll('_',' '))}</span></div><p class="place">${escapeHTML(event.date)} · ${escapeHTML(place(event))}</p><p class="impact">${escapeHTML(event.impact)}</p>`; item.addEventListener('click',()=>selectEvent(event)); list.append(item);
+          if (event.latitude !== null && markerLayer) { const marker=L.circleMarker([event.latitude,event.longitude], { radius:event.id===activeId?9:6, weight:2, color:'#fff', fillColor:colorByCause[event.cause]||'#6b7280', fillOpacity:.9 }).addTo(markerLayer); marker.bindPopup(detail(event), { maxWidth:540 }); marker.on('click',()=>{ activeId=event.id; render(); }); if(event.id===activeId) marker.openPopup(); }
+        });
+      }
+      ['#search','#cause','#country','#review','#mapped-only'].forEach(id => $(id).addEventListener(id==='#search'?'input':'change',()=>{activeId=null;render();})); render();
+    </script>
+  </body>
+</html>
