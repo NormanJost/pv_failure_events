@@ -1,6 +1,6 @@
 # PV failure event explorer
 
-This is a shareable, standalone snapshot generated 2026-07-29 21:24 UTC. Share this entire folder.
+This is a shareable, standalone snapshot generated 2026-08-06 21:08 UTC. Share this entire folder.
 
 ## Best way to share it
 
@@ -17,7 +17,7 @@ The background map uses OpenStreetMap tiles, so an internet connection is needed
 ## Included
 
 - `index.html` - explorer interface
-- `events.js` - current 97-event dataset
+- `events.js` - current 39-event dataset
 - `data/pv_failure_events_pvllm.csv` - source event table used to populate the explorer
 - `assets/leaflet/` - local map-library files (Leaflet, BSD-2-Clause license)
 - `data_quality.json` - validation snapshot
