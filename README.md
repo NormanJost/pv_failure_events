@@ -1,25 +1,17 @@
 # PV failure event explorer
 
-This is a shareable, standalone snapshot generated 2026-08-06 21:08 UTC. Share this entire folder.
+This is a complete GitHub Pages site snapshot generated 2026-08-13 22:54 UTC. It contains 129 PV failure event records.
 
-## Best way to share it
+## Publish on GitHub Pages
 
-Publish this folder with GitHub Pages and share the resulting web address. See `PUBLISH_ON_GITHUB.md`; recipients then need only a browser, not Python.
+Use this `webtool` folder as the repository root. Upload its **contents** directly to the repository root; do not place the folder inside another repository subfolder. In GitHub, enable **Settings** -> **Pages** -> **Deploy from a branch**, then select the `main` branch and the `/(root)` folder.
 
-## Open it
-
-Open `index.html` in a modern browser. The event data and map software are included locally.
-
-If your browser or organization blocks local HTML files, run `python serve.py` in this folder and open the local address it prints.
-
-The background map uses OpenStreetMap tiles, so an internet connection is needed for the basemap. The event list, filters, details, and embedded event data remain available without it.
+The page works from the GitHub Pages address without Python or other software. Map tiles use OpenStreetMap over the internet; the explorer interface, event list, filters, and data are all included locally.
 
 ## Included
 
 - `index.html` - explorer interface
-- `events.js` - current 39-event dataset
-- `data/pv_failure_events_pvllm.csv` - source event table used to populate the explorer
-- `assets/leaflet/` - local map-library files (Leaflet, BSD-2-Clause license)
-- `data_quality.json` - validation snapshot
-
-Do not edit `events.js` manually. Refresh this share folder from the main PV-LLM workflow when the dataset changes.
+- `events.js` - embedded event data used by the map and event list
+- `data/pv_failure_events_pvllm.csv` - backing PV-LLM-aligned CSV
+- `assets/leaflet/` - local Leaflet map library and license
+- `data_quality.json` - data validation snapshot

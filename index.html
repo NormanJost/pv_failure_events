@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PV failure event explorer</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <link rel="stylesheet" href="assets/leaflet/leaflet.css" crossorigin="">
     <style>
       :root { --ink:#12232e; --muted:#5e6d73; --line:#dbe4e8; --panel:#f7fafb; --accent:#008a7a; --accent-dark:#00675d; --warn:#d97706; --danger:#b91c1c; }
       * { box-sizing:border-box; } body { margin:0; color:var(--ink); background:#eef4f5; font:14px/1.4 Inter, ui-sans-serif, system-ui, sans-serif; }
@@ -35,7 +35,7 @@
       </section>
       <section class="map-area"><div id="map" aria-label="Map of PV failure events"></div><div class="map-note">Markers reflect source-reported or explicitly labelled geocoded coordinates. Unmapped records remain searchable in the event list.</div></section>
     </main>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="assets/leaflet/leaflet.js" crossorigin=""></script>
     <script src="events.js"></script>
     <script>
       const $ = (selector) => document.querySelector(selector);
